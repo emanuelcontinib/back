@@ -41,13 +41,13 @@ app.post('/login', (req, res, next) => {
       res.json({
             "message": "Ok"
       })
-})
-// passport.authenticate('local', {
-//       failureRedirect: '/login'
-// }),
-// function (req, res) {
-//       res.redirect('/');
-// });
+      // passport.authenticate('local', {
+            //       failureRedirect: '/login'
+            // }),
+            // function (req, res) {
+                  //       res.redirect('/');
+                  // });
+            })
 
 //USER TABLE
 app.get("/api/users", (req, res, next) => {
@@ -285,7 +285,7 @@ app.get("/api/printer", (req, res, next) => {
 
       var sql = "select * from printer"
       var params = []
-      db.all(sql, params, (err, rows) => {
+      db.all(sql, sqlite, count, params, (err, rows) => {
             if (err) {
                   res.status(400).json({
                         "error": err.message
@@ -298,6 +298,22 @@ app.get("/api/printer", (req, res, next) => {
             })
       });
 });
+app.get("/api/printer/count", (req, res, next) => {
+      var sql = "select count (*) from printer"
+      var params = []
+      db.all(sql, params, (err, rows) => {
+            if (err) {
+                  res.status(400).json({
+                        "error": err.message
+                  });
+                  return;
+            }
+            res.json({
+                  "message": "success",
+                  "data": rows
+            })
+      });
+})
 
 app.get("/api/printer/:id", (req, res, next) => {
       var sql = "select * from printer where id = ?"

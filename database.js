@@ -5,11 +5,9 @@ const DBSOURCE = "db.sqlite"
 
 let db = new sqlite3.Database(DBSOURCE, (err) => {
       if (err) {
-            // Cannot open database
-            // console.error(err.message)
-            // console.log('====================================');
-            // console.log(err);
-            // console.log('====================================');
+
+            console.error(err.message)
+
             throw err
       } else {
             console.log('Connected to the SQLite database.')
@@ -27,13 +25,16 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                               var insert = 'INSERT INTO user (email, password) VALUES (?,?)'
                               db.run(insert, ["admin.com", md5("admin123456")])
                               db.run(insert, ["user@example.com", md5("user123456")])
+
                         }
                   });
 
             db.run(`CREATE TABLE sureg (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         city text, 
-                        uf text 
+                        uf text,
+                        userId INTERGER, 
+                        FOREIGN KEY (userID) REFERENCES user(id)
                         
                         )`,
                   (err) => {
@@ -50,12 +51,15 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             db.run(`CREATE TABLE printer (
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   model text, 
-                  serial text 
-                  
-                  )`,
+                  serial text, 
+                  suregId INTERGER, 
+                        FOREIGN KEY (suregId) REFERENCES sureg(id))`,
                   (err) => {
                         if (err) {
                               // Table already created
+                              console.log('====================================');
+                              console.log(err);
+                              console.log('====================================');
 
                         } else {
                               // Table just created, creating some rows
