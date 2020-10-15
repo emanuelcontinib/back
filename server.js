@@ -42,16 +42,15 @@ app.post('/login', (req, res, next) => {
             "message": "Ok"
       })
       // passport.authenticate('local', {
-            //       failureRedirect: '/login'
-            // }),
-            // function (req, res) {
-                  //       res.redirect('/');
-                  // });
-            })
+      //       failureRedirect: '/login'
+      // }),
+      // function (req, res) {
+      //       res.redirect('/');
+      // });
+})
 
 //USER TABLE
 app.get("/api/users", (req, res, next) => {
-
       var sql = "select * from user"
       var params = []
       db.all(sql, params, (err, rows) => {
@@ -166,8 +165,8 @@ app.delete("/api/user/:id", (req, res, next) => {
 
 //SUREG TABLE
 app.get("/api/sureg", (req, res, next) => {
-
-      var sql = "select * from sureg"
+      var sql = `select (select count (*) from printer where sureg.id = printer.suregId) "quantity", city,uf,name, sureg.id
+      from sureg`
       var params = []
       db.all(sql, params, (err, rows) => {
             if (err) {
@@ -200,6 +199,23 @@ app.get("/api/sureg/:id", (req, res, next) => {
       });
 });
 
+app.get(`/api/sureg/:id/printer`, (req, res, next) => {
+      var sql = "select * from printer where suregId = ? "
+      var params = [req.params.id]
+      // return false
+      db.all(sql, params, (err, row) => {
+            if (err) {
+                  res.status(400).json({
+                        "error": err.message
+                  })
+            }
+            res.json({
+                  "message": "success",
+                  "data": row
+            })
+      })
+})
+
 app.post("/api/sureg/", (req, res, next) => {
       var errors = []
       if (!req.body.city) {
@@ -217,181 +233,170 @@ app.post("/api/sureg/", (req, res, next) => {
       var data = {
             city: req.body.city,
             uf: req.body.uf,
+            name: req.body.name
 
       }
-      var sql = 'INSERT INTO sureg (city, uf) VALUES (?,?)'
-      var params = [data.city, data.uf]
-      db.run(sql, params, function (err, result) {
-            if (err) {
-                  res.status(400).json({
-                        "error": err.message
-                  })
-                  return;
-            }
-            res.json({
-                  "message": "success",
-                  "data": data,
-                  "id": this.lastID
-            })
-      });
-})
-
-app.patch("/api/sureg/:id", (req, res, next) => {
-      var data = {
-            city: req.body.city,
-            uf: req.body.uf,
-      }
-      db.run(
-            `UPDATE sureg set 
-            city = COALESCE(?,city), 
-            uf = COALESCE(?,uf),
-            WHERE id = ?`,
-            [data.city, data.uf, req.params.id],
+      var sql = 'INSERT INTO sureg (city, uf, name) VALUES (?,?,?)'
+      var params = [data.city, data.uf, data.name]
+      db.run(sql, params, 
             function (err, result) {
                   if (err) {
                         res.status(400).json({
-                              "error": res.message
+                              "error": err.message
                         })
                         return;
                   }
                   res.json({
-                        message: "success",
-                        data: data,
-                        changes: this.changes
+                        "message": "success",
+                        "data": data,
+                        "id": this.lastID
                   })
-            });
+            }
+      );
 })
-
+app.patch("/api/sureg/:id", (req, res, next) => {
+            var data = {
+                  city: req.body.city,
+                  uf: req.body.uf,
+            }
+            db.run(
+                  `UPDATE sureg set 
+            city = COALESCE(?,city), 
+            uf = COALESCE(?,uf),
+            WHERE id = ?`,
+                  [data.city, data.uf, req.params.id],
+                  function (err, result) {
+                        if (err) {
+                              res.status(400).json({
+                                    "error": res.message
+                              })
+                              return;
+                        }
+                        res.json({
+                              message: "success",
+                              data: data,
+                              changes: this.changes
+                        })
+                  });
+})
 app.delete("/api/sureg/:id", (req, res, next) => {
+      console.log(req.params.id);
       db.run(
             'DELETE FROM sureg WHERE id = ?',
             req.params.id,
             function (err, result) {
                   if (err) {
+                        console.log("Deu erro")
+                        console.log(err)
                         res.status(400).json({
                               "error": res.message
                         })
                         return;
                   }
+                  console.log("Não deu erro e " + result)
                   res.json({
                         "message": "deleted",
                         changes: this.changes
                   })
-            });
+            }
+      );
 })
 
 //PRINTER TABLE
 app.get("/api/printer", (req, res, next) => {
 
-      var sql = "select * from printer"
-      var params = []
-      db.all(sql, sqlite, count, params, (err, rows) => {
-            if (err) {
-                  res.status(400).json({
-                        "error": err.message
-                  });
-                  return;
-            }
-            res.json({
-                  "message": "success",
-                  "data": rows
-            })
-      });
+            var sql = "select * from printer"
+            var params = []
+            db.all(sql, params, (err, rows) => {
+                  if (err) {
+                        res.status(400).json({
+                              "error": err.message
+                        });
+                        return;
+                  }
+                  res.json({
+                        "message": "success",
+                        "data": rows
+                  })
+            });
 });
-app.get("/api/printer/count", (req, res, next) => {
-      var sql = "select count (*) from printer"
-      var params = []
-      db.all(sql, params, (err, rows) => {
-            if (err) {
-                  res.status(400).json({
-                        "error": err.message
-                  });
-                  return;
-            }
-            res.json({
-                  "message": "success",
-                  "data": rows
-            })
-      });
-})
 
 app.get("/api/printer/:id", (req, res, next) => {
-      var sql = "select * from printer where id = ?"
-      var params = [req.params.id]
-      db.get(sql, params, (err, row) => {
-            if (err) {
+            var sql = "select * from printer where id = ?"
+            var params = [req.params.id]
+            db.get(sql, params, (err, row) => {
+                  if (err) {
+                        res.status(400).json({
+                              "error": err.message
+                        });
+                        return;
+                  }
+                  res.json({
+                        "message": "success",
+                        "data": row
+                  })
+            });
+});
+app.post("/api/printer/", (req, res, next) => {
+            var errors = []
+            console.log(req.body.suregId)
+            if (!req.body.serial) {
+                  errors.push("No serial specified");
+            }
+            if (!req.body.model) {
+                  errors.push("No model specified");
+            }
+            if (errors.length) {
                   res.status(400).json({
-                        "error": err.message
+                        "error": errors.join(",")
                   });
                   return;
             }
-            res.json({
-                  "message": "success",
-                  "data": row
-            })
-      });
-});
-
-app.post("/api/printer/", (req, res, next) => {
-      var errors = []
-      if (!req.body.serial) {
-            errors.push("No serial specified");
-      }
-      if (!req.body.model) {
-            errors.push("No model specified");
-      }
-      if (errors.length) {
-            res.status(400).json({
-                  "error": errors.join(",")
-            });
-            return;
-      }
-      var data = {
-            serial: req.body.serial,
-            model: req.body.model,
-
-      }
-      var sql = 'INSERT INTO printer (serial, model) VALUES (?,?)'
-      var params = [data.serial, data.model]
-      db.run(sql, params, function (err, result) {
-            if (err) {
-                  res.status(400).json({
-                        "error": err.message
-                  })
-                  return;
+            var data = {
+                  serial: req.body.serial,
+                  model: req.body.model,
+                  suregId: req.body.suregId,
             }
-            res.json({
-                  "message": "success",
-                  "data": data,
-                  "id": this.lastID
-            })
-      });
+            var sql = 'INSERT INTO printer (serial, model, suregId) VALUES (?,?,?)'
+            var params = [data.serial, data.model, data.suregId]
+            db.run(sql, params, function (err, result) {
+                  if (err) {
+                        res.status(400).json({
+                              "error": err.message
+                        })
+                        return;
+                  }
+                  res.json({
+                        "message": "success",
+                        "data": data,
+                        "id": this.lastID
+                  })
+            });
 })
-
 app.patch("/api/printer/:id", (req, res, next) => {
-      var data = {
-            serial: req.body.serial,
-            model: req.body.model,
-      }
-      db.run(
-            `UPDATE printer set 
+            var data = {
+                  serial: req.body.serial,
+                  model: req.body.model,
+            }
+            db.run(
+                  `UPDATE printer set 
             serial = COALESCE(?,serial), 
             model = COALESCE(?,model)
             WHERE id = ?`,
-            [data.serial, data.model, req.params.id],
-            function (err, result) {
-                  if (err) {
-                        res.status(400).json({
-                              "error": result
+                  [data.serial, data.model, req.params.id],
+                  function (err, result) {
+                        if (err) {
+                              res.status(400).json({
+                                    "error": result
+                              })
+                              return err
+                        }
+                        res.json({
+                              message: "success",
+                              data: data,
+                              changes: this.changes
                         })
-                        return err
-                  }
-                  res.json({
-                        message: "success",
-                        data: data,
-                        changes: this.changes
-                  })
-            });
+                  });
 })
 
 app.delete("/api/printer/:id", (req, res, next) => {
@@ -409,5 +414,6 @@ app.delete("/api/printer/:id", (req, res, next) => {
                         "message": "deleted",
                         changes: this.changes
                   })
-            });
+            }
+      );
 })

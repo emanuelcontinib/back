@@ -11,6 +11,9 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             throw err
       } else {
             console.log('Connected to the SQLite database.')
+
+            db.run(`PRAGMA foreign_keys = ON;`);
+
             db.run(`CREATE TABLE user (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email text UNIQUE, 
@@ -33,18 +36,19 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         city text, 
                         uf text,
-                        userId INTERGER, 
-                        FOREIGN KEY (userID) REFERENCES user(id)
-                        
-                        )`,
+                        name text UNIQUE,
+                        userId INTEGER, 
+                        FOREIGN KEY (userId) REFERENCES user(id)
+                        );`,
                   (err) => {
                         if (err) {
                               // Table already created
+                              console.log(err);
                         } else {
                               // Table just created, creating some rows
-                              var insert = 'INSERT INTO sureg ( city, uf) VALUES (?,?)'
-                              db.run(insert, ["ERECHIM", "RS"])
-                              db.run(insert, ["CAXIAS DO SUL", "RS"])
+                              var insert = 'INSERT INTO sureg ( city, uf, name) VALUES (?,?,?)'
+                              db.run(insert, ["ERECHIM", "RS","FRONTEIRA"])
+                              db.run(insert, ["CAXIAS DO SUL", "RS","VALE DOS SINOS"])
                         }
                   });
 
@@ -52,8 +56,12 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   model text, 
                   serial text, 
-                  suregId INTERGER, 
-                        FOREIGN KEY (suregId) REFERENCES sureg(id))`,
+                  suregId INTEGER,
+                        CONSTRAINT fk_sureg 
+                        FOREIGN KEY (suregId) 
+                        REFERENCES sureg(id)
+                        ON DELETE CASCADE
+                        );`,
                   (err) => {
                         if (err) {
                               // Table already created
