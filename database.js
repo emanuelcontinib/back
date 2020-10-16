@@ -37,7 +37,8 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                         city text, 
                         uf text,
                         name text UNIQUE,
-                        userId INTEGER, 
+                        userId INTEGER,
+                        ufId INTEGER,
                         FOREIGN KEY (userId) REFERENCES user(id)
                         );`,
                   (err) => {

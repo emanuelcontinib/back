@@ -165,8 +165,11 @@ app.delete("/api/user/:id", (req, res, next) => {
 
 //SUREG TABLE
 app.get("/api/sureg", (req, res, next) => {
-      var sql = `select (select count (*) from printer where sureg.id = printer.suregId) "quantity", city,uf,name, sureg.id
-      from sureg`
+      var sql = `select (select count (*) 
+                        from printer      
+                        where sureg.id = printer.suregId) 
+                  "quantity", city,uf,name, sureg.id, ufId
+                  from sureg`
       var params = []
       db.all(sql, params, (err, rows) => {
             if (err) {
@@ -233,11 +236,11 @@ app.post("/api/sureg/", (req, res, next) => {
       var data = {
             city: req.body.city,
             uf: req.body.uf,
-            name: req.body.name
-
+            name: req.body.name,
+            ufId: req.body.ufId
       }
-      var sql = 'INSERT INTO sureg (city, uf, name) VALUES (?,?,?)'
-      var params = [data.city, data.uf, data.name]
+      var sql = 'INSERT INTO sureg (city, uf, name, ufId) VALUES (?,?,?,?)'
+      var params = [data.city, data.uf, data.name, data.ufId]
       db.run(sql, params, 
             function (err, result) {
                   if (err) {
@@ -254,17 +257,21 @@ app.post("/api/sureg/", (req, res, next) => {
             }
       );
 })
-app.patch("/api/sureg/:id", (req, res, next) => {
+
+app.put("/api/sureg/:id", (req, res, next) => {
             var data = {
+                  name: req.body.name,
                   city: req.body.city,
                   uf: req.body.uf,
+                  ufId: req.body.ufId
             }
-            db.run(
-                  `UPDATE sureg set 
-            city = COALESCE(?,city), 
-            uf = COALESCE(?,uf),
-            WHERE id = ?`,
-                  [data.city, data.uf, req.params.id],
+
+            console.log(data);
+
+            var sql =  `UPDATE sureg set name = ?,city = ?, uf = ?,ufId = ? WHERE id = ?`;
+            var params = [data.name, data.city, data.uf, data.ufId, req.params.id];
+
+            db.run(sql, params,
                   function (err, result) {
                         if (err) {
                               res.status(400).json({
@@ -273,9 +280,9 @@ app.patch("/api/sureg/:id", (req, res, next) => {
                               return;
                         }
                         res.json({
-                              message: "success",
-                              data: data,
-                              changes: this.changes
+                              "message": "success",
+                              "data": data,
+                              "changes": this.changes
                         })
                   });
 })
@@ -296,7 +303,7 @@ app.delete("/api/sureg/:id", (req, res, next) => {
                   console.log("Não deu erro e " + result)
                   res.json({
                         "message": "deleted",
-                        changes: this.changes
+                        "changes": this.changes
                   })
             }
       );
