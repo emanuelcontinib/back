@@ -219,6 +219,67 @@ app.get(`/api/sureg/:id/printer`, (req, res, next) => {
       })
 })
 
+app.get(`/api/search/sureg/:value`, (req, res, next) => {
+      var sql = `SELECT S.*
+      FROM sureg AS S
+      LEFT OUTER JOIN
+      printer AS P ON
+      S.ID = P.suregId
+      WHERE upper ((S.name) LIKE ?
+      OR upper (P.serial) LIKE ?
+      OR upper (P.model) LIKE ?)
+      GROUP BY S.id`;
+
+      const paramsValue = "%"+req.params.value.toUpperCase()+"%";
+      console.log(sql)
+      var params = [paramsValue,paramsValue,paramsValue];
+      // return false
+      console.log('req',req)
+      db.all(sql, params, (err, row) => {
+            if (err) {
+                  res.status(400).json({
+                        "error": err.message,
+                        data: []
+                  })
+                  return
+            }
+            res.json({
+                  "message": "success",
+                  "data": row
+            })
+      })
+})
+
+app.get(`/api/search/:id/printer/:value`, (req, res, next) => {
+      var sql = `SELECT P.*
+      FROM sureg AS S
+      LEFT OUTER JOIN
+      printer AS P ON
+      S.ID = P.suregId
+      WHERE suregId = ?
+      AND (upper (P.serial) LIKE ?
+      OR upper (P.model) LIKE ?)`;
+
+      const paramsValue = "%"+req.params.value.toUpperCase()+"%";
+      console.log(sql)
+      var params = [req.params.id,paramsValue,paramsValue];
+      // return false
+      console.log('req',req)
+      db.all(sql, params, (err, row) => {
+            if (err) {
+                  console.log(err)
+                  res.status(400).json({
+                        "error": err.message,
+                        data:[]
+                  })
+            }
+            res.json({
+                  "message": "success",
+                  "data": row
+            })
+      })
+})
+
 app.post("/api/sureg/", (req, res, next) => {
       var errors = []
       if (!req.body.city) {
