@@ -41,6 +41,7 @@ app.post("/login", (req, res, next) => {
       var sql = "select id from user where email = ? and password = ?"
 
       db.get(sql, params, (err, row) => {
+
             if (err) {
                   res.status(400).json({
                         "error": err.message
@@ -50,7 +51,7 @@ app.post("/login", (req, res, next) => {
 
             if (row) {
                   let obj = {
-                        "id":row.id,
+                        "id":row,
                   }
                   var token = jwt.sign(obj, process.env.SECRET, {
                   });
@@ -207,7 +208,8 @@ app.get("/api/sureg", (req, res, next) => {
 app.get("/api/sureg/:token", (req, res, next) => {
       var tokenDecoded = jwt_decode(req.params.token)
       var sql = "select * from sureg where userId = ?"
-      var params = [tokenDecoded.id]
+      var params = [tokenDecoded.id.id]
+      console.log(params)
       db.all(sql, params, (err, row) => {
             if (err) {
                   return res.status(400).json({
@@ -297,6 +299,9 @@ app.get(`/api/search/:id/printer/:value`, (req, res, next) => {
 })
 
 app.post("/api/sureg/", (req, res, next) => {
+
+      let userIdDecoded = jwt_decode(req.body.userId)
+
       var errors = []
       if (!req.body.city) {
             errors.push("No city specified");
@@ -314,10 +319,13 @@ app.post("/api/sureg/", (req, res, next) => {
             city: req.body.city,
             uf: req.body.uf,
             name: req.body.name,
-            ufId: req.body.ufId
+            ufId: req.body.ufId,
+            userId: userIdDecoded.id.id
       }
-      var sql = 'INSERT INTO sureg (city, uf, name, ufId) VALUES (?,?,?,?)'
-      var params = [data.city, data.uf, data.name, data.ufId]
+
+      var sql = 'INSERT INTO sureg (city, uf, name, ufId, userId) VALUES (?,?,?,?,?)'
+      
+      var params = [data.city, data.uf, data.name, data.ufId, data.userId]
       db.run(sql, params,
             function (err, result) {
                   if (err) {
@@ -336,13 +344,13 @@ app.post("/api/sureg/", (req, res, next) => {
 })
 
 app.put("/api/sureg/:id", (req, res, next) => {
+
       var data = {
             name: req.body.name,
             city: req.body.city,
             uf: req.body.uf,
             ufId: req.body.ufId
       }
-
 
       var sql = `UPDATE sureg set name = ?,city = ?, uf = ?,ufId = ? WHERE id = ?`;
       var params = [data.name, data.city, data.uf, data.ufId, req.params.id];
@@ -368,7 +376,6 @@ app.delete("/api/sureg/:id", (req, res, next) => {
             req.params.id,
             function (err, result) {
                   if (err) {
-                        console.log("Deu erro")
                         console.log(err)
                         res.status(400).json({
                               "error": res.message
